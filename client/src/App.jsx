@@ -6,6 +6,7 @@ import Lobby from './pages/Lobby';
 import Voting from './pages/Voting';
 import Game from './pages/Game';
 import InstallPrompt from './components/InstallPrompt';
+import ReconnectingOverlay from './components/ReconnectingOverlay';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         </AnimatePresence>
       </div>
       <InstallPrompt />
+      <ReconnectingOverlay />
     </>
   );
 }

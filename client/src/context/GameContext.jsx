@@ -34,24 +34,74 @@ export function GameProvider({ children }) {
   // Use ref to track current room code for reconnection scenarios
   const currentRoomCode = useRef(localStorage.getItem('ito-current-room') || null);
 
+  // Track if we had a session before disconnect
+  const hadSessionBeforeDisconnect = useRef(false);
+
   // Connect to socket
   useEffect(() => {
     const newSocket = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
       reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
     });
 
     newSocket.on('connect', () => {
       console.log('Connected to server:', newSocket.id);
       setConnected(true);
-      // Reconexão agora é manual via botão na Home
+
+      // Auto-reconnect if we had a session before
+      const savedRoom = localStorage.getItem('ito-current-room');
+      const savedName = localStorage.getItem('ito-player-name');
+
+      if (savedRoom && savedName && hadSessionBeforeDisconnect.current) {
+        console.log('Auto-reconnecting to room:', savedRoom);
+        setIsReconnecting(true);
+
+        newSocket.emit('rejoin-room', {
+          code: savedRoom.toUpperCase(),
+          playerName: savedName,
+          playerId: playerId.current,
+        }, (response) => {
+          setIsReconnecting(false);
+          if (response.success) {
+            console.log('Auto-reconnect successful:', response.state);
+            currentRoomCode.current = savedRoom;
+
+            if (response.state === 'lobby') {
+              setRoom(response.room);
+              setGameState(null);
+              setVotingState(null);
+              setDrawingState(null);
+            } else if (response.state === 'voting') {
+              setVotingState(response.votingState);
+              setRoom(null);
+              setGameState(null);
+              setDrawingState(null);
+            } else if (response.state === 'playing') {
+              setGameState(response.gameState);
+              setRoom(null);
+              setVotingState(null);
+              setDrawingState(null);
+            }
+          } else {
+            console.log('Auto-reconnect failed:', response.error);
+            // Don't clear session - user might want to try again manually
+          }
+        });
+      }
     });
 
     newSocket.on('disconnect', (reason) => {
       console.log('Disconnected from server:', reason);
       setConnected(false);
+
+      // Remember if we had an active session
+      const savedRoom = localStorage.getItem('ito-current-room');
+      if (savedRoom) {
+        hadSessionBeforeDisconnect.current = true;
+      }
     });
 
     newSocket.on('connect_error', (err) => {
