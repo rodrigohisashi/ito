@@ -44,11 +44,12 @@ io.on('connection', (socket) => {
   console.log(`Player connected: ${socket.id}`);
 
   // Create a new room
-  socket.on('create-room', (playerName, callback) => {
+  socket.on('create-room', (data, callback) => {
     try {
-      const room = roomManager.createRoom(socket.id, playerName);
+      const { playerName, playerId } = data;
+      const room = roomManager.createRoom(socket.id, playerName, playerId);
       socket.join(room.code);
-      console.log(`Room created: ${room.code} by ${playerName}`);
+      console.log(`Room created: ${room.code} by ${playerName} (${playerId})`);
       callback({ success: true, room: gameLogic.getPublicRoomState(room, socket.id) });
     } catch (error) {
       console.error('Error creating room:', error);
@@ -59,8 +60,8 @@ io.on('connection', (socket) => {
   // Join existing room
   socket.on('join-room', (data, callback) => {
     try {
-      const { code, playerName } = data;
-      const result = roomManager.joinRoom(code, socket.id, playerName);
+      const { code, playerName, playerId } = data;
+      const result = roomManager.joinRoom(code, socket.id, playerName, playerId);
 
       if (result.error) {
         callback({ success: false, error: result.error });
@@ -84,6 +85,69 @@ io.on('connection', (socket) => {
     } catch (error) {
       console.error('Error joining room:', error);
       callback({ success: false, error: 'Erro ao entrar na sala' });
+    }
+  });
+
+  // Rejoin room (reconnection)
+  socket.on('rejoin-room', (data, callback) => {
+    try {
+      const { code, playerName, playerId } = data;
+      console.log(`Tentativa de reconexão: ${playerName} (${playerId}) na sala ${code}`);
+
+      const result = roomManager.reconnectPlayer(code, socket.id, playerId);
+
+      if (result.error) {
+        console.log(`Falha na reconexão: ${result.error}`);
+        callback({ success: false, error: result.error });
+        return;
+      }
+
+      socket.join(result.room.code);
+      console.log(`${playerName} reconectou na sala ${code}`);
+
+      // Notifica outros jogadores que o player voltou
+      result.room.players.forEach((player) => {
+        if (player.id !== socket.id) {
+          io.to(player.id).emit('player-reconnected', {
+            player: { id: socket.id, name: result.player.name },
+            room: gameLogic.getPublicRoomState(result.room, player.id),
+          });
+        }
+      });
+
+      // Retorna o estado apropriado baseado no status da sala
+      const room = result.room;
+      if (room.status === 'lobby') {
+        callback({
+          success: true,
+          state: 'lobby',
+          room: gameLogic.getPublicRoomState(room, socket.id),
+        });
+      } else if (room.status === 'voting') {
+        callback({
+          success: true,
+          state: 'voting',
+          votingState: {
+            ...gameLogic.getVotingState(room, socket.id),
+            drawnNumber: room.drawnNumber,
+          },
+        });
+      } else if (room.status === 'playing' || room.status === 'reveal') {
+        callback({
+          success: true,
+          state: 'playing',
+          gameState: gameLogic.getPlayerGameState(room, socket.id),
+        });
+      } else {
+        callback({
+          success: true,
+          state: room.status,
+          room: gameLogic.getPublicRoomState(room, socket.id),
+        });
+      }
+    } catch (error) {
+      console.error('Error rejoining room:', error);
+      callback({ success: false, error: 'Erro ao reconectar' });
     }
   });
 
@@ -509,16 +573,29 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`Player disconnected: ${socket.id}`);
 
-    const result = roomManager.removePlayer(socket.id);
+    // Marca como desconectado ao invés de remover (permite reconexão)
+    const result = roomManager.markPlayerDisconnected(socket.id);
 
     if (result && !result.deleted) {
-      // Notify remaining players (send to each with their own perspective)
+      // Notifica outros jogadores
       result.room.players.forEach((player) => {
-        io.to(player.id).emit('player-left', {
-          playerId: socket.id,
-          newHost: result.newHost,
-          room: gameLogic.getPublicRoomState(result.room, player.id),
-        });
+        if (!player.disconnected && player.id !== socket.id) {
+          if (result.playerDisconnected) {
+            // Durante o jogo - player só desconectou temporariamente
+            io.to(player.id).emit('player-disconnected', {
+              player: { id: socket.id, name: result.playerDisconnected.name },
+              newHost: result.newHost,
+              room: gameLogic.getPublicRoomState(result.room, player.id),
+            });
+          } else {
+            // No lobby - player saiu de vez
+            io.to(player.id).emit('player-left', {
+              playerId: socket.id,
+              newHost: result.newHost,
+              room: gameLogic.getPublicRoomState(result.room, player.id),
+            });
+          }
+        }
       });
     }
   });

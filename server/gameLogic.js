@@ -55,6 +55,7 @@ function getPlayerGameState(room, socketId) {
       card: p.id === socketId || p.revealed ? p.card : null,
       revealed: p.revealed,
       isYou: p.id === socketId,
+      disconnected: p.disconnected || false,
     })),
   };
 }
@@ -70,6 +71,7 @@ function getPublicRoomState(room, socketId) {
       name: p.name,
       isHost: p.id === room.host,
       isYou: p.id === socketId,
+      disconnected: p.disconnected || false,
     })),
   };
 }
@@ -91,6 +93,7 @@ function getVotingState(room, socketId) {
       isHost: p.id === room.host,
       isYou: p.id === socketId,
       hasVoted: !!room.votes[p.id],
+      disconnected: p.disconnected || false,
     })),
   };
 }

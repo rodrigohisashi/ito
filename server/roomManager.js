@@ -1,6 +1,9 @@
 // Room storage (in-memory)
 const rooms = new Map();
 
+// Tempo para remover player desconectado (5 minutos)
+const DISCONNECT_TIMEOUT = 5 * 60 * 1000;
+
 // Generate random 4-character room code
 function generateRoomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars (0,O,1,I)
@@ -16,17 +19,21 @@ function generateRoomCode() {
 }
 
 // Create a new room
-function createRoom(hostSocketId, hostName) {
+function createRoom(hostSocketId, hostName, hostPlayerId) {
   const code = generateRoomCode();
   const room = {
     code,
     host: hostSocketId,
+    hostPlayerId: hostPlayerId, // ID persistente do host
     players: [
       {
         id: hostSocketId,
+        playerId: hostPlayerId, // ID persistente (sobrevive reconexão)
         name: hostName,
         card: null,
         revealed: false,
+        disconnected: false,
+        disconnectedAt: null,
       },
     ],
     status: 'lobby', // lobby | voting | drawing | playing | reveal
@@ -42,7 +49,7 @@ function createRoom(hostSocketId, hostName) {
 }
 
 // Join existing room
-function joinRoom(code, socketId, playerName) {
+function joinRoom(code, socketId, playerName, playerId) {
   const room = rooms.get(code.toUpperCase());
   if (!room) {
     return { error: 'Sala não encontrada' };
@@ -53,15 +60,20 @@ function joinRoom(code, socketId, playerName) {
   if (room.players.length >= 8) {
     return { error: 'Sala cheia (máximo 8 jogadores)' };
   }
-  if (room.players.some((p) => p.name === playerName)) {
+  // Verifica nome duplicado (ignorando players desconectados com mesmo playerId)
+  const existingPlayer = room.players.find((p) => p.name === playerName);
+  if (existingPlayer && existingPlayer.playerId !== playerId) {
     return { error: 'Nome já está em uso nesta sala' };
   }
 
   room.players.push({
     id: socketId,
+    playerId: playerId,
     name: playerName,
     card: null,
     revealed: false,
+    disconnected: false,
+    disconnectedAt: null,
   });
 
   return { room };
@@ -82,7 +94,79 @@ function getRoomByPlayerId(socketId) {
   return null;
 }
 
-// Remove player from room
+// Marca player como desconectado (não remove imediatamente)
+function markPlayerDisconnected(socketId) {
+  const room = getRoomByPlayerId(socketId);
+  if (!room) return null;
+
+  const player = room.players.find((p) => p.id === socketId);
+  if (!player) return null;
+
+  // Se está no lobby, remove de vez (não faz sentido manter)
+  if (room.status === 'lobby') {
+    room.players = room.players.filter((p) => p.id !== socketId);
+
+    if (room.players.length === 0) {
+      rooms.delete(room.code);
+      return { room, deleted: true };
+    }
+
+    // Se host saiu, atribui novo host
+    if (room.host === socketId && room.players.length > 0) {
+      room.host = room.players[0].id;
+      room.hostPlayerId = room.players[0].playerId;
+    }
+
+    return { room, deleted: false, newHost: room.host };
+  }
+
+  // Durante o jogo, apenas marca como desconectado
+  player.disconnected = true;
+  player.disconnectedAt = Date.now();
+
+  console.log(`Player ${player.name} marcado como desconectado na sala ${room.code}`);
+
+  // Agenda remoção após timeout
+  setTimeout(() => {
+    cleanupDisconnectedPlayer(room.code, player.playerId);
+  }, DISCONNECT_TIMEOUT);
+
+  // Se host desconectou, passa pra outro player conectado
+  if (room.host === socketId) {
+    const connectedPlayer = room.players.find((p) => !p.disconnected);
+    if (connectedPlayer) {
+      room.host = connectedPlayer.id;
+      room.hostPlayerId = connectedPlayer.playerId;
+    }
+  }
+
+  return { room, deleted: false, newHost: room.host, playerDisconnected: player };
+}
+
+// Remove player desconectado após timeout
+function cleanupDisconnectedPlayer(code, playerId) {
+  const room = rooms.get(code);
+  if (!room) return;
+
+  const player = room.players.find((p) => p.playerId === playerId);
+  if (!player || !player.disconnected) return;
+
+  // Se ainda está desconectado após o timeout, remove de vez
+  console.log(`Removendo player ${player.name} da sala ${code} por timeout`);
+  room.players = room.players.filter((p) => p.playerId !== playerId);
+
+  // Remove voto se existir
+  if (room.votes[player.id]) {
+    delete room.votes[player.id];
+  }
+
+  // Se sala ficou vazia, deleta
+  if (room.players.length === 0) {
+    rooms.delete(code);
+  }
+}
+
+// Remove player from room (legacy - usado para saída voluntária)
 function removePlayer(socketId) {
   const room = getRoomByPlayerId(socketId);
   if (!room) return null;
@@ -103,9 +187,54 @@ function removePlayer(socketId) {
   // If host left, assign new host
   if (room.host === socketId && room.players.length > 0) {
     room.host = room.players[0].id;
+    room.hostPlayerId = room.players[0].playerId;
   }
 
   return { room, deleted: false, newHost: room.host };
+}
+
+// Encontra sala por playerId persistente
+function getRoomByPersistentPlayerId(playerId) {
+  for (const room of rooms.values()) {
+    if (room.players.some((p) => p.playerId === playerId)) {
+      return room;
+    }
+  }
+  return null;
+}
+
+// Reconecta um player (atualiza socket ID)
+function reconnectPlayer(code, newSocketId, playerId) {
+  const room = rooms.get(code.toUpperCase());
+  if (!room) {
+    return { error: 'Sala não encontrada' };
+  }
+
+  const player = room.players.find((p) => p.playerId === playerId);
+  if (!player) {
+    return { error: 'Jogador não encontrado nesta sala' };
+  }
+
+  // Atualiza socket ID e marca como conectado
+  const oldSocketId = player.id;
+  player.id = newSocketId;
+  player.disconnected = false;
+  player.disconnectedAt = null;
+
+  console.log(`Player ${player.name} reconectado na sala ${code} (${oldSocketId} -> ${newSocketId})`);
+
+  // Se era o host original, restaura como host
+  if (room.hostPlayerId === playerId) {
+    room.host = newSocketId;
+  }
+
+  // Atualiza votos se existirem (troca socket ID antigo pelo novo)
+  if (room.votes[oldSocketId]) {
+    room.votes[newSocketId] = room.votes[oldSocketId];
+    delete room.votes[oldSocketId];
+  }
+
+  return { room, player };
 }
 
 // Update room status
@@ -215,7 +344,10 @@ module.exports = {
   joinRoom,
   getRoom,
   getRoomByPlayerId,
+  getRoomByPersistentPlayerId,
   removePlayer,
+  markPlayerDisconnected,
+  reconnectPlayer,
   updateRoomStatus,
   setVotingThemes,
   addVote,
