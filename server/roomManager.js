@@ -204,15 +204,41 @@ function getRoomByPersistentPlayerId(playerId) {
 }
 
 // Reconecta um player (atualiza socket ID)
-function reconnectPlayer(code, newSocketId, playerId) {
+function reconnectPlayer(code, newSocketId, playerId, playerName) {
   const room = rooms.get(code.toUpperCase());
   if (!room) {
     return { error: 'Sala não encontrada' };
   }
 
-  const player = room.players.find((p) => p.playerId === playerId);
+  let player = room.players.find((p) => p.playerId === playerId);
+
+  // Se player não existe na sala (foi removido no lobby), re-adiciona
   if (!player) {
-    return { error: 'Jogador não encontrado nesta sala' };
+    // Só permite re-adicionar se está no lobby
+    if (room.status !== 'lobby') {
+      return { error: 'Jogador não encontrado nesta sala' };
+    }
+
+    // Verifica se o nome já está em uso por outro player
+    const nameInUse = room.players.find((p) => p.name === playerName && p.playerId !== playerId);
+    if (nameInUse) {
+      return { error: 'Nome já está em uso nesta sala' };
+    }
+
+    // Re-adiciona o player
+    player = {
+      id: newSocketId,
+      playerId: playerId,
+      name: playerName,
+      card: null,
+      revealed: false,
+      disconnected: false,
+      disconnectedAt: null,
+    };
+    room.players.push(player);
+    console.log(`Player ${playerName} re-adicionado na sala ${code}`);
+
+    return { room, player, rejoined: true };
   }
 
   // Atualiza socket ID e marca como conectado

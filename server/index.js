@@ -94,7 +94,7 @@ io.on('connection', (socket) => {
       const { code, playerName, playerId } = data;
       console.log(`Tentativa de reconexão: ${playerName} (${playerId}) na sala ${code}`);
 
-      const result = roomManager.reconnectPlayer(code, socket.id, playerId);
+      const result = roomManager.reconnectPlayer(code, socket.id, playerId, playerName);
 
       if (result.error) {
         console.log(`Falha na reconexão: ${result.error}`);
@@ -107,8 +107,10 @@ io.on('connection', (socket) => {
 
       // Notifica outros jogadores que o player voltou
       result.room.players.forEach((player) => {
-        if (player.id !== socket.id) {
-          io.to(player.id).emit('player-reconnected', {
+        if (player.id !== socket.id && !player.disconnected) {
+          // Se foi re-adicionado no lobby, envia player-joined
+          const eventName = result.rejoined ? 'player-joined' : 'player-reconnected';
+          io.to(player.id).emit(eventName, {
             player: { id: socket.id, name: result.player.name },
             room: gameLogic.getPublicRoomState(result.room, player.id),
           });
