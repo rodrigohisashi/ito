@@ -153,6 +153,45 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Kick player from room (host only)
+  socket.on('kick-player', (data, callback) => {
+    try {
+      const { code, targetPlayerId } = data;
+      const result = roomManager.kickPlayer(code, socket.id, targetPlayerId);
+
+      if (result.error) {
+        callback({ success: false, error: result.error });
+        return;
+      }
+
+      console.log(`${result.kickedPlayer.name} foi removido da sala ${code}`);
+
+      // Notify the kicked player
+      io.to(result.kickedPlayer.id).emit('kicked-from-room', {
+        message: 'Você foi removido da sala pelo host',
+      });
+
+      // Make kicked player leave the socket room
+      const kickedSocket = io.sockets.sockets.get(result.kickedPlayer.id);
+      if (kickedSocket) {
+        kickedSocket.leave(code);
+      }
+
+      // Notify remaining players
+      result.room.players.forEach((player) => {
+        io.to(player.id).emit('player-left', {
+          player: { id: result.kickedPlayer.id, name: result.kickedPlayer.name },
+          room: gameLogic.getPublicRoomState(result.room, player.id),
+        });
+      });
+
+      callback({ success: true, room: gameLogic.getPublicRoomState(result.room, socket.id) });
+    } catch (error) {
+      console.error('Error kicking player:', error);
+      callback({ success: false, error: 'Erro ao remover jogador' });
+    }
+  });
+
   // Start game (host only) - First draws a theme number
   socket.on('start-game', (code, callback) => {
     try {

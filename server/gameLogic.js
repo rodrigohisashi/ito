@@ -68,6 +68,7 @@ function getPublicRoomState(room, socketId) {
     isHost: room.host === socketId,
     players: room.players.map((p) => ({
       id: p.id,
+      playerId: p.playerId,
       name: p.name,
       isHost: p.id === room.host,
       isYou: p.id === socketId,

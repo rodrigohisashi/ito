@@ -60,10 +60,24 @@ function joinRoom(code, socketId, playerName, playerId) {
   if (room.players.length >= 8) {
     return { error: 'Sala cheia (máximo 8 jogadores)' };
   }
-  // Verifica nome duplicado (ignorando players desconectados com mesmo playerId)
-  const existingPlayer = room.players.find((p) => p.name === playerName);
-  if (existingPlayer && existingPlayer.playerId !== playerId) {
+
+  // Verifica nome duplicado (case-insensitive, ignorando players com mesmo playerId)
+  const normalizedName = playerName.trim().toLowerCase();
+  const existingPlayer = room.players.find(
+    (p) => p.name.toLowerCase() === normalizedName && p.playerId !== playerId
+  );
+  if (existingPlayer) {
     return { error: 'Nome já está em uso nesta sala' };
+  }
+
+  // Se já existe player com mesmo playerId, atualiza ao invés de adicionar
+  const existingByPlayerId = room.players.find((p) => p.playerId === playerId);
+  if (existingByPlayerId) {
+    existingByPlayerId.id = socketId;
+    existingByPlayerId.name = playerName;
+    existingByPlayerId.disconnected = false;
+    existingByPlayerId.disconnectedAt = null;
+    return { room };
   }
 
   room.players.push({
@@ -77,6 +91,34 @@ function joinRoom(code, socketId, playerName, playerId) {
   });
 
   return { room };
+}
+
+// Kick player from room (host only)
+function kickPlayer(code, hostSocketId, targetPlayerId) {
+  const room = rooms.get(code.toUpperCase());
+  if (!room) {
+    return { error: 'Sala não encontrada' };
+  }
+  if (room.host !== hostSocketId) {
+    return { error: 'Apenas o host pode remover jogadores' };
+  }
+  if (room.status !== 'lobby') {
+    return { error: 'Não é possível remover durante o jogo' };
+  }
+
+  const targetPlayer = room.players.find((p) => p.playerId === targetPlayerId);
+  if (!targetPlayer) {
+    return { error: 'Jogador não encontrado' };
+  }
+  if (targetPlayer.id === hostSocketId) {
+    return { error: 'Você não pode remover a si mesmo' };
+  }
+
+  // Remove the player
+  const kickedPlayer = { ...targetPlayer };
+  room.players = room.players.filter((p) => p.playerId !== targetPlayerId);
+
+  return { room, kickedPlayer };
 }
 
 // Get room by code
@@ -368,6 +410,7 @@ function getAllRooms() {
 module.exports = {
   createRoom,
   joinRoom,
+  kickPlayer,
   getRoom,
   getRoomByPlayerId,
   getRoomByPersistentPlayerId,

@@ -136,6 +136,18 @@ export function GameProvider({ children }) {
       }
     });
 
+    // Kicked from room event
+    newSocket.on('kicked-from-room', (data) => {
+      console.log('Kicked from room:', data);
+      setError(data.message || 'Você foi removido da sala');
+      currentRoomCode.current = null;
+      localStorage.removeItem('ito-current-room');
+      setRoom(null);
+      setGameState(null);
+      setVotingState(null);
+      setDrawingState(null);
+    });
+
     // Voting events - after number draw animation
     newSocket.on('voting-started', (data) => {
       console.log('Voting started:', data);
@@ -269,6 +281,29 @@ export function GameProvider({ children }) {
           setGameState(null);
           setVotingState(null);
           setDrawingState(null);
+          resolve(response.room);
+        } else {
+          setError(response.error);
+          reject(new Error(response.error));
+        }
+      });
+    });
+  }, [socket]);
+
+  // Kick player from room (host only)
+  const kickPlayer = useCallback((code, targetPlayerId) => {
+    return new Promise((resolve, reject) => {
+      if (!socket || !socket.connected) {
+        reject(new Error('Não conectado ao servidor'));
+        return;
+      }
+
+      setError(null);
+
+      socket.emit('kick-player', { code, targetPlayerId }, (response) => {
+        console.log('Kick player response:', response);
+        if (response.success) {
+          setRoom(response.room);
           resolve(response.room);
         } else {
           setError(response.error);
@@ -577,6 +612,7 @@ export function GameProvider({ children }) {
     clearError,
     createRoom,
     joinRoom,
+    kickPlayer,
     startGame,
     voteTheme,
     skipVoting,

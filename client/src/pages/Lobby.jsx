@@ -9,7 +9,7 @@ import RoomCode from '../components/RoomCode';
 export default function Lobby() {
   const { code } = useParams();
   const navigate = useNavigate();
-  const { room, votingState, drawingState, gameState, startGame, leaveRoom, error, clearError } = useGame();
+  const { room, votingState, drawingState, gameState, startGame, kickPlayer, leaveRoom, error, clearError } = useGame();
   const [isStarting, setIsStarting] = useState(false);
 
   // Navigate to voting when drawingState or votingState is received
@@ -61,6 +61,16 @@ export default function Lobby() {
   const handleLeave = () => {
     leaveRoom();
     navigate('/', { replace: true });
+  };
+
+  const handleKick = async (playerId, playerName) => {
+    if (!window.confirm(`Remover ${playerName} da sala?`)) return;
+
+    try {
+      await kickPlayer(code, playerId);
+    } catch (err) {
+      console.error('Error kicking player:', err);
+    }
   };
 
   // Show loading while waiting for draw/voting to start after clicking
@@ -148,7 +158,11 @@ export default function Lobby() {
             <p className="text-yellow-400 text-xs">Mínimo 2 jogadores</p>
           )}
         </div>
-        <PlayerList players={room.players} />
+        <PlayerList
+          players={room.players}
+          isHost={room.isHost}
+          onKick={room.isHost ? handleKick : null}
+        />
       </motion.div>
 
       {/* Waiting animation */}
