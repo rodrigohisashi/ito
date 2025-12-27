@@ -54,19 +54,25 @@ export default function RoomCode({ code }) {
     <div className="flex flex-col items-center gap-4">
       {/* Code display */}
       <motion.div
-        className="glass-strong rounded-2xl px-8 py-4 cursor-pointer"
+        className="glass-strong rounded-2xl px-8 py-5 cursor-pointer relative overflow-hidden border-glow"
         whileTap={{ scale: 0.95 }}
         onClick={copyCode}
       >
-        <p className="text-xs text-white/50 text-center mb-1">CÓDIGO DA SALA</p>
-        <p className="text-4xl font-bold tracking-[0.3em] text-gradient">{code}</p>
+        {/* Decorative corners */}
+        <div className="absolute top-2 left-2 w-4 h-4 border-l-2 border-t-2 border-gold/40" />
+        <div className="absolute top-2 right-2 w-4 h-4 border-r-2 border-t-2 border-gold/40" />
+        <div className="absolute bottom-2 left-2 w-4 h-4 border-l-2 border-b-2 border-gold/40" />
+        <div className="absolute bottom-2 right-2 w-4 h-4 border-r-2 border-b-2 border-gold/40" />
+
+        <p className="text-xs text-gold/60 text-center mb-2 tracking-widest uppercase">Codigo da Sala</p>
+        <p className="text-4xl font-display font-bold tracking-[0.3em] text-gradient">{code}</p>
       </motion.div>
 
       {/* Copy feedback */}
       <motion.p
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: copied ? 1 : 0, y: copied ? 0 : -10 }}
-        className="text-green-400 text-sm"
+        className="text-gold-light text-sm"
       >
         Copiado!
       </motion.p>
@@ -76,7 +82,7 @@ export default function RoomCode({ code }) {
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={copyLink}
-          className="glass rounded-xl px-4 py-2 flex items-center gap-2 text-white/80 hover:text-white"
+          className="glass rounded-xl px-4 py-2 flex items-center gap-2 text-ivory/70 hover:text-gold hover:border-gold/30 transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -92,7 +98,7 @@ export default function RoomCode({ code }) {
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={shareRoom}
-          className="glass rounded-xl px-4 py-2 flex items-center gap-2 text-white/80 hover:text-white"
+          className="glass rounded-xl px-4 py-2 flex items-center gap-2 text-ivory/70 hover:text-gold hover:border-gold/30 transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -107,8 +113,8 @@ export default function RoomCode({ code }) {
       </div>
 
       {/* Hint */}
-      <p className="text-white/30 text-xs text-center">
-        Toque no código para copiar
+      <p className="text-ivory/30 text-xs text-center">
+        Toque no codigo para copiar
       </p>
     </div>
   );

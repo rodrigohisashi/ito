@@ -5,6 +5,7 @@ import { useGame } from '../context/GameContext';
 import Button from '../components/Button';
 import PlayerList from '../components/PlayerList';
 import RoomCode from '../components/RoomCode';
+import PageWrapper from '../components/PageWrapper';
 
 export default function Lobby() {
   const { code } = useParams();
@@ -76,7 +77,7 @@ export default function Lobby() {
   // Show loading while waiting for draw/voting to start after clicking
   if (isStarting && !votingState && !drawingState) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6">
+      <PageWrapper className="items-center justify-center p-6">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -86,15 +87,16 @@ export default function Lobby() {
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={i}
-                className="w-4 h-4 bg-primary rounded-full"
+                className="w-4 h-4 bg-gold rounded-full"
                 animate={{ y: [0, -15, 0] }}
                 transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.1 }}
+                style={{ boxShadow: '0 0 10px rgba(212, 175, 55, 0.5)' }}
               />
             ))}
           </div>
-          <p className="text-white/60">Sorteando tema...</p>
+          <p className="text-gold/60 font-display">Sorteando tema...</p>
         </motion.div>
-      </div>
+      </PageWrapper>
     );
   }
 
@@ -106,20 +108,15 @@ export default function Lobby() {
   const canStart = room.isHost && room.players.length >= 2;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="flex-1 flex flex-col p-6"
-    >
+    <PageWrapper variant="slideRight" className="p-6">
       {/* Header */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         className="text-center mb-6"
       >
-        <h1 className="text-3xl font-bold text-gradient mb-2">Sala de Espera</h1>
-        <p className="text-white/60">Compartilhe o código com seus amigos</p>
+        <h1 className="text-3xl font-display font-bold text-gradient mb-2">Sala de Espera</h1>
+        <p className="text-gold/60">Compartilhe o codigo com seus amigos</p>
       </motion.div>
 
       {/* Room code */}
@@ -137,7 +134,7 @@ export default function Lobby() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-4 px-4 py-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-sm text-center"
+          className="mb-4 px-4 py-3 bg-gold-rose/20 border border-gold-rose/30 rounded-xl text-gold-rose text-sm text-center"
         >
           {error}
         </motion.div>
@@ -151,11 +148,11 @@ export default function Lobby() {
         className="flex-1 overflow-auto"
       >
         <div className="flex items-center justify-between mb-3">
-          <p className="text-white/60 text-sm">
+          <p className="text-gold/60 text-sm">
             Jogadores ({room.players.length}/8)
           </p>
           {room.players.length < 2 && (
-            <p className="text-yellow-400 text-xs">Mínimo 2 jogadores</p>
+            <p className="text-gold-rose text-xs">Minimo 2 jogadores</p>
           )}
         </div>
         <PlayerList
@@ -177,13 +174,14 @@ export default function Lobby() {
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={i}
-                className="w-3 h-3 bg-primary rounded-full"
+                className="w-3 h-3 bg-gold rounded-full"
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.1 }}
+                style={{ boxShadow: '0 0 8px rgba(212, 175, 55, 0.5)' }}
               />
             ))}
           </div>
-          <p className="text-white/40 text-sm">Aguardando o host iniciar...</p>
+          <p className="text-gold/40 text-sm">Aguardando o host iniciar...</p>
         </motion.div>
       )}
 
@@ -211,6 +209,6 @@ export default function Lobby() {
           Sair da Sala
         </Button>
       </motion.div>
-    </motion.div>
+    </PageWrapper>
   );
 }

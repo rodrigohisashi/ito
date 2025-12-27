@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS Variables for Casino/Luxo Theme */
+:root {
+  --color-dark: #0d0d0d;
+  --color-dark-100: #121218;
+  --color-dark-200: #1c1c24;
+  --color-dark-300: #252530;
+  --color-gold: #d4af37;
+  --color-gold-dark: #c9a227;
+  --color-gold-light: #e6c75a;
+  --color-gold-rose: #b76e79;
+  --color-ivory: #f5f5f0;
+  --color-burgundy: #4a1c2e;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -14,10 +28,10 @@ html {
 }
 
 body {
-  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
+  background: var(--color-dark);
   min-height: 100vh;
   min-height: 100dvh;
-  color: white;
+  color: var(--color-ivory);
   overflow-x: hidden;
 }
 
@@ -26,58 +40,105 @@ input, textarea, select {
   font-size: 16px;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Gold theme */
 ::-webkit-scrollbar {
   width: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(212, 175, 55, 0.05);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.5);
+  background: rgba(212, 175, 55, 0.4);
   border-radius: 2px;
 }
 
-/* Glass effect utility */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.6);
+}
+
+/* Casino/Luxo Utility Classes */
 @layer utilities {
+  /* Glass effects with gold tint */
   .glass {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(28, 28, 36, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 175, 55, 0.1);
   }
 
   .glass-strong {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(37, 37, 48, 0.9);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(212, 175, 55, 0.2);
   }
 
+  .glass-gold {
+    background: rgba(212, 175, 55, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+  }
+
+  /* Gold text gradient */
   .text-gradient {
-    background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
+    background: linear-gradient(135deg, #d4af37 0%, #f5e6a3 50%, #d4af37 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  .bg-gradient-primary {
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  .text-gradient-rose {
+    background: linear-gradient(135deg, #b76e79 0%, #d4af37 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
-  .bg-gradient-secondary {
-    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  /* Gold gradient backgrounds */
+  .bg-gradient-gold {
+    background: linear-gradient(135deg, #d4af37 0%, #c9a227 100%);
   }
 
+  .bg-gradient-gold-shimmer {
+    background: linear-gradient(
+      90deg,
+      #c9a227 0%,
+      #d4af37 25%,
+      #e6c75a 50%,
+      #d4af37 75%,
+      #c9a227 100%
+    );
+    background-size: 200% 100%;
+  }
+
+  .bg-gradient-luxury {
+    background: radial-gradient(
+      ellipse 150% 100% at 50% 0%,
+      #1c1c24 0%,
+      #121218 40%,
+      #0d0d0d 100%
+    );
+  }
+
+  /* Card shadows with gold glow */
   .card-shadow {
     box-shadow:
-      0 0 20px rgba(139, 92, 246, 0.3),
-      0 0 40px rgba(139, 92, 246, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      0 0 20px rgba(212, 175, 55, 0.2),
+      0 0 40px rgba(212, 175, 55, 0.1),
+      inset 0 1px 0 rgba(212, 175, 55, 0.1);
   }
 
+  .card-shadow-lg {
+    box-shadow:
+      0 0 30px rgba(212, 175, 55, 0.3),
+      0 0 60px rgba(212, 175, 55, 0.15),
+      inset 0 1px 0 rgba(212, 175, 55, 0.15);
+  }
+
+  /* Safe areas */
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 20px);
   }
@@ -85,9 +146,46 @@ input, textarea, select {
   .safe-top {
     padding-top: env(safe-area-inset-top, 20px);
   }
+
+  /* Shine effect overlay */
+  .shine-effect {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shine-effect::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 40%,
+      rgba(212, 175, 55, 0.1) 45%,
+      rgba(212, 175, 55, 0.2) 50%,
+      rgba(212, 175, 55, 0.1) 55%,
+      transparent 60%
+    );
+    animation: shine 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* Gold border glow */
+  .border-glow {
+    box-shadow:
+      0 0 0 1px rgba(212, 175, 55, 0.3),
+      0 0 15px rgba(212, 175, 55, 0.2);
+  }
+
+  /* Art Deco pattern overlay */
+  .pattern-deco {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0L60 30L30 60L0 30Z' fill='none' stroke='rgba(212,175,55,0.08)' stroke-width='0.5'/%3E%3Ccircle cx='30' cy='30' r='2' fill='rgba(212,175,55,0.05)'/%3E%3C/svg%3E");
+  }
 }
 
-/* Animated background */
+/* Animated luxury background */
 .bg-animated {
   position: fixed;
   top: 0;
@@ -96,6 +194,12 @@ input, textarea, select {
   bottom: 0;
   z-index: -1;
   overflow: hidden;
+  background: radial-gradient(
+    ellipse 150% 100% at 50% 0%,
+    #1c1c24 0%,
+    #121218 40%,
+    #0d0d0d 100%
+  );
 }
 
 .bg-animated::before {
@@ -105,14 +209,36 @@ input, textarea, select {
   height: 200%;
   top: -50%;
   left: -50%;
-  background: radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-              radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
-              radial-gradient(circle at 40% 40%, rgba(244, 114, 182, 0.1) 0%, transparent 40%);
-  animation: bgMove 20s ease-in-out infinite;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(183, 110, 121, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(74, 28, 46, 0.08) 0%, transparent 40%);
+  animation: bgMove 25s ease-in-out infinite;
+}
+
+.bg-animated::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0L60 30L30 60L0 30Z' fill='none' stroke='rgba(212,175,55,0.03)' stroke-width='0.5'/%3E%3C/svg%3E");
+  opacity: 0.5;
 }
 
 @keyframes bgMove {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
   33% { transform: translate(2%, 2%) rotate(1deg); }
   66% { transform: translate(-1%, 1%) rotate(-1deg); }
+}
+
+@keyframes shine {
+  0% { transform: translateX(-100%) rotate(25deg); }
+  50%, 100% { transform: translateX(100%) rotate(25deg); }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .bg-animated::before,
+  .shine-effect::after {
+    animation: none;
+  }
 }

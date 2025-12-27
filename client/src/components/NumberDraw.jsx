@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function NumberDraw({ targetNumber, onComplete, duration = 3000 }) {
@@ -36,7 +36,6 @@ export default function NumberDraw({ targetNumber, onComplete, duration = 3000 }
       if (Math.random() < speed) {
         if (frameCount >= totalFrames - 5) {
           // Last few frames: approach target
-          const diff = targetNumber - currentNumber;
           setCurrentNumber(prev => {
             const step = Math.ceil(Math.abs(targetNumber - prev) / 3);
             if (prev < targetNumber) return Math.min(prev + step, targetNumber);
@@ -72,16 +71,16 @@ export default function NumberDraw({ targetNumber, onComplete, duration = 3000 }
       <motion.p
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-white/60 text-lg mb-4"
+        className="text-gold/60 text-lg mb-4 font-display"
       >
-        {phase === 'revealed' ? 'Número sorteado!' : 'Sorteando número...'}
+        {phase === 'revealed' ? 'Numero sorteado!' : 'Sorteando numero...'}
       </motion.p>
 
       {/* Number display */}
       <motion.div
         className="relative"
         animate={{
-          scale: phase === 'revealed' ? [1, 1.2, 1] : 1,
+          scale: phase === 'revealed' ? [1, 1.1, 1] : 1,
         }}
         transition={{ duration: 0.5 }}
       >
@@ -91,29 +90,35 @@ export default function NumberDraw({ targetNumber, onComplete, duration = 3000 }
             phase === 'revealed' ? 'opacity-60' : 'opacity-30'
           }`}
           style={{
-            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.8) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(212, 175, 55, 0.6) 0%, transparent 70%)',
           }}
         />
 
         {/* Number box */}
         <motion.div
-          className={`relative glass-strong rounded-3xl w-48 h-48 flex items-center justify-center ${
-            phase === 'revealed' ? 'card-shadow' : ''
+          className={`relative glass-strong rounded-3xl w-48 h-48 flex items-center justify-center border border-gold/20 ${
+            phase === 'revealed' ? 'card-shadow-lg' : ''
           }`}
           animate={{
             boxShadow: isSpinning
               ? [
-                  '0 0 20px rgba(139, 92, 246, 0.3)',
-                  '0 0 40px rgba(139, 92, 246, 0.5)',
-                  '0 0 20px rgba(139, 92, 246, 0.3)',
+                  '0 0 20px rgba(212, 175, 55, 0.2)',
+                  '0 0 40px rgba(212, 175, 55, 0.4)',
+                  '0 0 20px rgba(212, 175, 55, 0.2)',
                 ]
-              : '0 0 40px rgba(139, 92, 246, 0.5)',
+              : '0 0 40px rgba(212, 175, 55, 0.4)',
           }}
           transition={{
             duration: 0.3,
             repeat: isSpinning ? Infinity : 0,
           }}
         >
+          {/* Corner decorations */}
+          <div className="absolute top-3 left-3 w-4 h-4 border-l-2 border-t-2 border-gold/30" />
+          <div className="absolute top-3 right-3 w-4 h-4 border-r-2 border-t-2 border-gold/30" />
+          <div className="absolute bottom-3 left-3 w-4 h-4 border-l-2 border-b-2 border-gold/30" />
+          <div className="absolute bottom-3 right-3 w-4 h-4 border-r-2 border-b-2 border-gold/30" />
+
           <AnimatePresence mode="wait">
             <motion.span
               key={currentNumber}
@@ -121,8 +126,8 @@ export default function NumberDraw({ targetNumber, onComplete, duration = 3000 }
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.8 }}
               transition={{ duration: isSpinning ? 0.05 : 0.3 }}
-              className={`text-7xl font-bold ${
-                phase === 'revealed' ? 'text-gradient' : 'text-white'
+              className={`text-7xl font-display font-bold ${
+                phase === 'revealed' ? 'text-gradient' : 'text-ivory'
               }`}
             >
               {currentNumber}
@@ -141,7 +146,7 @@ export default function NumberDraw({ targetNumber, onComplete, duration = 3000 }
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              className="w-3 h-3 bg-primary rounded-full"
+              className="w-3 h-3 bg-gold rounded-full"
               animate={{
                 scale: [1, 1.5, 1],
                 opacity: [0.5, 1, 0.5],
@@ -150,6 +155,9 @@ export default function NumberDraw({ targetNumber, onComplete, duration = 3000 }
                 duration: 0.6,
                 repeat: Infinity,
                 delay: i * 0.15,
+              }}
+              style={{
+                boxShadow: '0 0 8px rgba(212, 175, 55, 0.5)',
               }}
             />
           ))}
@@ -164,7 +172,7 @@ export default function NumberDraw({ targetNumber, onComplete, duration = 3000 }
           transition={{ delay: 0.3, type: 'spring' }}
           className="mt-6 text-center"
         >
-          <p className="text-primary-light text-xl font-semibold">
+          <p className="text-gold text-xl font-display font-semibold">
             Tema #{currentNumber}
           </p>
         </motion.div>

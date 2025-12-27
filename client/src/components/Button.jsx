@@ -14,10 +14,16 @@ export default function Button({
     'font-semibold rounded-2xl transition-all duration-200 flex items-center justify-center gap-2 select-none';
 
   const variants = {
-    primary: 'bg-gradient-primary text-white shadow-lg shadow-primary/30 hover:shadow-primary/50',
-    secondary: 'glass text-white hover:bg-white/10',
-    outline: 'border-2 border-primary text-primary hover:bg-primary/10',
-    danger: 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30',
+    primary:
+      'bg-gradient-gold text-dark font-bold shadow-lg shadow-gold/30 hover:shadow-gold/50 border border-gold-light/30',
+    secondary:
+      'glass text-ivory hover:bg-gold/10 border-gold/20 hover:border-gold/40',
+    outline:
+      'border-2 border-gold text-gold hover:bg-gold/10',
+    danger:
+      'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30',
+    ghost:
+      'text-gold hover:bg-gold/10 border border-transparent hover:border-gold/20',
   };
 
   const sizes = {

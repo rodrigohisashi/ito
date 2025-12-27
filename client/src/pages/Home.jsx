@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import Button from '../components/Button';
+import PageWrapper from '../components/PageWrapper';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -83,12 +84,7 @@ export default function Home() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="flex-1 flex flex-col items-center justify-center p-6"
-    >
+    <PageWrapper variant="luxuryReveal" className="items-center justify-center p-6">
       {/* Logo */}
       <motion.div
         initial={{ y: -30, opacity: 0 }}
@@ -96,8 +92,24 @@ export default function Home() {
         transition={{ delay: 0.1 }}
         className="mb-12 text-center"
       >
-        <h1 className="text-7xl font-bold text-gradient mb-2">ITO</h1>
-        <p className="text-white/60">Jogo de Cartas Cooperativo</p>
+        {/* Decorative line above */}
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <div className="w-12 h-[1px] bg-gradient-to-r from-transparent to-gold/50" />
+          <div className="w-2 h-2 rotate-45 border border-gold/50" />
+          <div className="w-12 h-[1px] bg-gradient-to-l from-transparent to-gold/50" />
+        </div>
+
+        <h1 className="text-7xl font-display font-bold text-gradient mb-2">ITO</h1>
+        <p className="text-gold/60 tracking-widest text-sm uppercase">Jogo de Cartas Cooperativo</p>
+
+        {/* Decorative line below */}
+        <div className="flex items-center justify-center gap-4 mt-4">
+          <div className="w-8 h-[1px] bg-gradient-to-r from-transparent to-gold/30" />
+          <div className="w-1.5 h-1.5 rotate-45 bg-gold/30" />
+          <div className="w-16 h-[1px] bg-gold/30" />
+          <div className="w-1.5 h-1.5 rotate-45 bg-gold/30" />
+          <div className="w-8 h-[1px] bg-gradient-to-l from-transparent to-gold/30" />
+        </div>
       </motion.div>
 
       {/* Connection status */}
@@ -105,9 +117,9 @@ export default function Home() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mb-6 px-4 py-2 glass rounded-full text-yellow-400 text-sm flex items-center gap-2"
+          className="mb-6 px-4 py-2 glass rounded-full text-gold text-sm flex items-center gap-2 border border-gold/20"
         >
-          <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
+          <div className="w-2 h-2 bg-gold rounded-full animate-pulse" />
           Conectando ao servidor...
         </motion.div>
       )}
@@ -117,7 +129,7 @@ export default function Home() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 px-4 py-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-sm"
+          className="mb-6 px-4 py-3 bg-gold-rose/20 border border-gold-rose/30 rounded-xl text-gold-rose text-sm"
         >
           {error}
         </motion.div>
@@ -130,10 +142,10 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-6 w-full max-w-sm"
         >
-          <div className="glass rounded-xl p-4 border border-primary/30">
-            <p className="text-white/60 text-sm mb-1">Sessão anterior encontrada</p>
-            <p className="text-white font-medium mb-3">
-              Sala <span className="text-primary font-bold">{savedRoom.code}</span> como <span className="text-primary">{savedRoom.name}</span>
+          <div className="glass rounded-xl p-4 border border-gold/30">
+            <p className="text-ivory/60 text-sm mb-1">Sessao anterior encontrada</p>
+            <p className="text-ivory font-medium mb-3">
+              Sala <span className="text-gold font-bold">{savedRoom.code}</span> como <span className="text-gold">{savedRoom.name}</span>
             </p>
             <div className="flex gap-2">
               <Button
@@ -195,14 +207,14 @@ export default function Home() {
           >
             {/* Name input */}
             <div>
-              <label className="block text-sm text-white/60 mb-2">Seu nome</label>
+              <label className="block text-sm text-gold/60 mb-2 tracking-wide">Seu nome</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Digite seu nome"
                 maxLength={20}
-                className="w-full px-4 py-3 glass rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="w-full px-4 py-3 glass rounded-xl text-ivory placeholder-ivory/30 focus:outline-none focus:ring-2 focus:ring-gold/50 border border-gold/10 focus:border-gold/30 transition-colors"
                 autoFocus
               />
             </div>
@@ -210,14 +222,14 @@ export default function Home() {
             {/* Room code input (join mode) */}
             {mode === 'join' && (
               <div>
-                <label className="block text-sm text-white/60 mb-2">Código da sala</label>
+                <label className="block text-sm text-gold/60 mb-2 tracking-wide">Codigo da sala</label>
                 <input
                   type="text"
                   value={roomCode}
                   onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                   placeholder="Ex: A1B2"
                   maxLength={4}
-                  className="w-full px-4 py-3 glass rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50 tracking-[0.2em] text-center text-xl font-bold"
+                  className="w-full px-4 py-3 glass rounded-xl text-ivory placeholder-ivory/30 focus:outline-none focus:ring-2 focus:ring-gold/50 tracking-[0.2em] text-center text-xl font-display font-bold border border-gold/10 focus:border-gold/30 transition-colors"
                 />
               </div>
             )}
@@ -255,10 +267,10 @@ export default function Home() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="mt-12 text-white/30 text-sm"
+        className="mt-12 text-gold/30 text-sm tracking-wide"
       >
         Feito com cartas de 0 a 100
       </motion.p>
-    </motion.div>
+    </PageWrapper>
   );
 }
