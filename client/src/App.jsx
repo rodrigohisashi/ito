@@ -5,6 +5,7 @@ import Join from './pages/Join';
 import Lobby from './pages/Lobby';
 import Voting from './pages/Voting';
 import Game from './pages/Game';
+import InstallPrompt from './components/InstallPrompt';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           </Routes>
         </AnimatePresence>
       </div>
+      <InstallPrompt />
     </>
   );
 }
