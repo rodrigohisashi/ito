@@ -10,10 +10,16 @@
     "start": "cd server && npm start",
     "install:all": "npm install && cd server && npm install && cd ../client && npm install"
   },
-  "keywords": ["ito", "card-game", "multiplayer", "socket.io"],
+  "keywords": [
+    "ito",
+    "card-game",
+    "multiplayer",
+    "socket.io"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "sharp": "^0.34.5"
   }
 }
