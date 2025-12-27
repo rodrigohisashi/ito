@@ -115,12 +115,18 @@ export default function Card({
           <span className="absolute top-12 left-6 text-lg font-display font-bold text-gold/30">{number}</span>
           <span className="absolute bottom-12 right-6 text-lg font-display font-bold text-gold/30 rotate-180">{number}</span>
 
-          {/* Player name at bottom */}
+          {/* Player name at bottom - elegant minimal style */}
           {playerName && (
-            <div className="absolute bottom-8 left-0 right-0 flex justify-center">
-              <div className="px-4 py-1 bg-gold/10 rounded-full border border-gold/20">
-                <span className={`${nameSizes[size]} font-medium text-gold/60 tracking-wide`}>{playerName}</span>
+            <div className="absolute bottom-8 left-0 right-0 flex flex-col items-center">
+              {/* Decorative line above name */}
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-[1px] bg-gradient-to-r from-transparent to-gold/30" />
+                <div className="w-1 h-1 rotate-45 border border-gold/30" />
+                <div className="w-6 h-[1px] bg-gradient-to-l from-transparent to-gold/30" />
               </div>
+              <span className={`${nameSizes[size]} font-display font-medium text-gold/50 tracking-[0.2em] uppercase`}>
+                {playerName}
+              </span>
             </div>
           )}
 
@@ -221,15 +227,21 @@ export default function Card({
 
             {/* Player name with elegant styling */}
             {playerName && (
-              <div className="relative">
-                {/* Decorative diamond elements */}
-                <div className="absolute -left-5 top-1/2 -translate-y-1/2 w-2 h-2 rotate-45 border border-gold/40" />
-                <div className="absolute -right-5 top-1/2 -translate-y-1/2 w-2 h-2 rotate-45 border border-gold/40" />
-
-                <div className="px-6 py-2 bg-dark/60 backdrop-blur-sm rounded-lg border border-gold/30 shadow-lg">
-                  <span className={`${nameSizes[size]} font-semibold text-gold tracking-wider`}>
-                    {playerName}
-                  </span>
+              <div className="flex flex-col items-center">
+                {/* Decorative line with diamonds */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-[1px] bg-gradient-to-r from-transparent to-gold/40" />
+                  <div className="w-1.5 h-1.5 rotate-45 border border-gold/40" />
+                  <div className="w-8 h-[1px] bg-gradient-to-l from-transparent to-gold/40" />
+                </div>
+                <span className={`${nameSizes[size]} font-display font-semibold text-gold/70 tracking-[0.15em] uppercase`}>
+                  {playerName}
+                </span>
+                {/* Bottom decorative line */}
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="w-4 h-[1px] bg-gradient-to-r from-transparent to-gold/30" />
+                  <div className="w-1 h-1 rotate-45 bg-gold/30" />
+                  <div className="w-4 h-[1px] bg-gradient-to-l from-transparent to-gold/30" />
                 </div>
               </div>
             )}
