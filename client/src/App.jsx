@@ -1,0 +1,28 @@
+import { Routes, Route } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import Home from './pages/Home';
+import Join from './pages/Join';
+import Lobby from './pages/Lobby';
+import Voting from './pages/Voting';
+import Game from './pages/Game';
+
+function App() {
+  return (
+    <>
+      <div className="bg-animated" />
+      <div className="min-h-screen min-h-[100dvh] flex flex-col safe-top safe-bottom">
+        <AnimatePresence mode="wait">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/entrar/:code" element={<Join />} />
+            <Route path="/sala/:code" element={<Lobby />} />
+            <Route path="/votacao/:code" element={<Voting />} />
+            <Route path="/jogo/:code" element={<Game />} />
+          </Routes>
+        </AnimatePresence>
+      </div>
+    </>
+  );
+}
+
+export default App;
