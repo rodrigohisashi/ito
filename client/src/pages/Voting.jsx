@@ -48,13 +48,13 @@ export default function Voting() {
     }
   }, [room, votingState, drawingState, gameState, navigate]);
 
-  // Redirect to home if no state
+  // Redirect to join page if no state
   useEffect(() => {
     if (!votingState && !drawingState && !gameState && !room) {
-      console.log('No state, redirecting to home');
-      navigate('/', { replace: true });
+      console.log('No state, redirecting to join page');
+      navigate(`/entrar/${code}`, { replace: true });
     }
-  }, [votingState, drawingState, gameState, room, navigate]);
+  }, [votingState, drawingState, gameState, room, navigate, code]);
 
   const handleVote = useCallback(async (themeId) => {
     try {

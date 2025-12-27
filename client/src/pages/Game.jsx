@@ -52,13 +52,13 @@ export default function Game() {
     }
   }, [room, gameState, navigate]);
 
-  // Redirect to home if no game state and no room
+  // Redirect to join page if no game state and no room
   useEffect(() => {
     if (!gameState && !room) {
-      console.log('No gameState or room, redirecting to home');
-      navigate('/', { replace: true });
+      console.log('No gameState or room, redirecting to join page');
+      navigate(`/entrar/${code}`, { replace: true });
     }
-  }, [gameState, room, navigate]);
+  }, [gameState, room, navigate, code]);
 
   // Toggle peek at card (local only - doesn't reveal to others)
   const handlePeekCard = () => {

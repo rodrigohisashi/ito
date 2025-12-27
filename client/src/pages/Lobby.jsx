@@ -35,13 +35,13 @@ export default function Lobby() {
     }
   }, [gameState, navigate]);
 
-  // Redirect to home if no room and no other state
+  // Redirect to join page if no room and no other state
   useEffect(() => {
     if (!room && !votingState && !drawingState && !gameState) {
-      console.log('No room or gameState, redirecting to home');
-      navigate('/', { replace: true });
+      console.log('No room or gameState, redirecting to join page');
+      navigate(`/entrar/${code}`, { replace: true });
     }
-  }, [room, votingState, drawingState, gameState, navigate]);
+  }, [room, votingState, drawingState, gameState, navigate, code]);
 
   const handleStartGame = async () => {
     if (isStarting) return;
