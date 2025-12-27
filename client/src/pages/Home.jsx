@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGame } from '../context/GameContext';
@@ -6,12 +6,22 @@ import Button from '../components/Button';
 
 export default function Home() {
   const navigate = useNavigate();
-  const { playerName, setPlayerName, createRoom, joinRoom, connected, error, clearError } = useGame();
+  const { playerName, setPlayerName, createRoom, joinRoom, reconnectToRoom, connected, error, clearError, isReconnecting } = useGame();
 
   const [name, setName] = useState(playerName);
   const [roomCode, setRoomCode] = useState('');
   const [mode, setMode] = useState(null); // null | 'create' | 'join'
   const [loading, setLoading] = useState(false);
+  const [savedRoom, setSavedRoom] = useState(null);
+
+  // Verifica se tem uma sessão salva
+  useEffect(() => {
+    const room = localStorage.getItem('ito-current-room');
+    const savedName = localStorage.getItem('ito-player-name');
+    if (room && savedName) {
+      setSavedRoom({ code: room, name: savedName });
+    }
+  }, []);
 
   const handleCreateRoom = async () => {
     if (!name.trim()) return;
@@ -41,6 +51,35 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleReconnect = async () => {
+    if (!savedRoom) return;
+    setLoading(true);
+    clearError();
+
+    try {
+      const result = await reconnectToRoom(savedRoom.code, savedRoom.name);
+      if (result.state === 'lobby') {
+        navigate(`/sala/${savedRoom.code}`);
+      } else if (result.state === 'voting') {
+        navigate(`/votacao/${savedRoom.code}`);
+      } else if (result.state === 'playing') {
+        navigate(`/jogo/${savedRoom.code}`);
+      }
+    } catch (err) {
+      console.error(err);
+      // Se falhar, limpa a sessão salva
+      localStorage.removeItem('ito-current-room');
+      setSavedRoom(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClearSession = () => {
+    localStorage.removeItem('ito-current-room');
+    setSavedRoom(null);
   };
 
   return (
@@ -81,6 +120,40 @@ export default function Home() {
           className="mb-6 px-4 py-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-sm"
         >
           {error}
+        </motion.div>
+      )}
+
+      {/* Reconnect banner */}
+      {savedRoom && connected && mode === null && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 w-full max-w-sm"
+        >
+          <div className="glass rounded-xl p-4 border border-primary/30">
+            <p className="text-white/60 text-sm mb-1">Sessão anterior encontrada</p>
+            <p className="text-white font-medium mb-3">
+              Sala <span className="text-primary font-bold">{savedRoom.code}</span> como <span className="text-primary">{savedRoom.name}</span>
+            </p>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleReconnect}
+                variant="primary"
+                size="md"
+                className="flex-1"
+                loading={loading}
+              >
+                Reconectar
+              </Button>
+              <Button
+                onClick={handleClearSession}
+                variant="secondary"
+                size="md"
+              >
+                ✕
+              </Button>
+            </div>
+          </div>
         </motion.div>
       )}
 

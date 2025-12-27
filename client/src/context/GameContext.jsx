@@ -46,48 +46,7 @@ export function GameProvider({ children }) {
     newSocket.on('connect', () => {
       console.log('Connected to server:', newSocket.id);
       setConnected(true);
-
-      // Tenta reconectar se tinha uma sala ativa
-      const savedRoom = localStorage.getItem('ito-current-room');
-      const savedName = localStorage.getItem('ito-player-name');
-      if (savedRoom && savedName) {
-        console.log('Tentando reconectar à sala:', savedRoom);
-        setIsReconnecting(true);
-        newSocket.emit('rejoin-room', {
-          code: savedRoom,
-          playerName: savedName,
-          playerId: playerId.current,
-        }, (response) => {
-          console.log('Rejoin response:', response);
-          setIsReconnecting(false);
-          if (response.success) {
-            console.log('Reconectado com sucesso!', response.state);
-            currentRoomCode.current = savedRoom;
-            // Restaura o estado baseado no que o servidor retornou
-            if (response.state === 'lobby') {
-              setRoom(response.room);
-              setGameState(null);
-              setVotingState(null);
-              setDrawingState(null);
-            } else if (response.state === 'voting') {
-              setVotingState(response.votingState);
-              setRoom(null);
-              setGameState(null);
-              setDrawingState(null);
-            } else if (response.state === 'playing') {
-              setGameState(response.gameState);
-              setRoom(null);
-              setVotingState(null);
-              setDrawingState(null);
-            }
-          } else {
-            console.log('Não foi possível reconectar:', response.error);
-            // Limpa dados salvos se a sala não existe mais
-            localStorage.removeItem('ito-current-room');
-            currentRoomCode.current = null;
-          }
-        });
-      }
+      // Reconexão agora é manual via botão na Home
     });
 
     newSocket.on('disconnect', (reason) => {
@@ -495,6 +454,54 @@ export function GameProvider({ children }) {
   // Clear error
   const clearError = useCallback(() => setError(null), []);
 
+  // Reconnect to room (manual reconnection from Home page)
+  const reconnectToRoom = useCallback((code, name) => {
+    return new Promise((resolve, reject) => {
+      if (!socket || !socket.connected) {
+        reject(new Error('Não conectado ao servidor'));
+        return;
+      }
+
+      setError(null);
+      setPlayerName(name);
+
+      socket.emit('rejoin-room', {
+        code: code.toUpperCase(),
+        playerName: name,
+        playerId: playerId.current,
+      }, (response) => {
+        console.log('Reconnect response:', response);
+        if (response.success) {
+          currentRoomCode.current = code;
+          localStorage.setItem('ito-current-room', code);
+
+          // Restaura o estado baseado no que o servidor retornou
+          if (response.state === 'lobby') {
+            setRoom(response.room);
+            setGameState(null);
+            setVotingState(null);
+            setDrawingState(null);
+          } else if (response.state === 'voting') {
+            setVotingState(response.votingState);
+            setRoom(null);
+            setGameState(null);
+            setDrawingState(null);
+          } else if (response.state === 'playing') {
+            setGameState(response.gameState);
+            setRoom(null);
+            setVotingState(null);
+            setDrawingState(null);
+          }
+
+          resolve(response);
+        } else {
+          setError(response.error);
+          reject(new Error(response.error));
+        }
+      });
+    });
+  }, [socket]);
+
   // Leave/reset state
   const leaveRoom = useCallback(() => {
     currentRoomCode.current = null;
@@ -531,6 +538,7 @@ export function GameProvider({ children }) {
     revealAllCards,
     resetGame,
     leaveRoom,
+    reconnectToRoom,
     currentRoomCode: currentRoomCode.current,
   };
 
