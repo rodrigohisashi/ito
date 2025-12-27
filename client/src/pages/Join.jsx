@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGame } from '../context/GameContext';
@@ -7,10 +7,42 @@ import Button from '../components/Button';
 export default function Join() {
   const { code } = useParams();
   const navigate = useNavigate();
-  const { playerName, setPlayerName, joinRoom, room, votingState, gameState, connected, error, clearError } = useGame();
+  const { playerName, joinRoom, reconnectToRoom, room, votingState, gameState, connected, error, clearError } = useGame();
 
   const [name, setName] = useState(playerName);
   const [isJoining, setIsJoining] = useState(false);
+  const [isAutoReconnecting, setIsAutoReconnecting] = useState(false);
+  const autoReconnectAttempted = useRef(false);
+
+  // Auto-reconnect if there's a saved session for this room
+  useEffect(() => {
+    if (!connected || autoReconnectAttempted.current) return;
+
+    const savedRoom = localStorage.getItem('ito-current-room');
+    const savedName = localStorage.getItem('ito-player-name');
+
+    if (savedRoom && savedName && savedRoom.toUpperCase() === code.toUpperCase()) {
+      autoReconnectAttempted.current = true;
+      setIsAutoReconnecting(true);
+
+      reconnectToRoom(savedRoom, savedName)
+        .then((result) => {
+          if (result.state === 'lobby') {
+            navigate(`/sala/${savedRoom}`, { replace: true });
+          } else if (result.state === 'voting') {
+            navigate(`/votacao/${savedRoom}`, { replace: true });
+          } else if (result.state === 'playing') {
+            navigate(`/jogo/${savedRoom}`, { replace: true });
+          }
+        })
+        .catch((err) => {
+          console.error('Auto-reconnect failed:', err);
+          // Clear session and show join form
+          localStorage.removeItem('ito-current-room');
+          setIsAutoReconnecting(false);
+        });
+    }
+  }, [connected, code, reconnectToRoom, navigate]);
 
   // If already in room, redirect appropriately
   useEffect(() => {
@@ -51,6 +83,31 @@ export default function Join() {
       handleJoin();
     }
   };
+
+  // Show loading while auto-reconnecting
+  if (isAutoReconnecting) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex-1 flex flex-col items-center justify-center p-6"
+      >
+        <div className="text-center">
+          <div className="flex justify-center gap-2 mb-4">
+            {[0, 1, 2].map((i) => (
+              <motion.div
+                key={i}
+                className="w-4 h-4 bg-primary rounded-full"
+                animate={{ y: [0, -15, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.1 }}
+              />
+            ))}
+          </div>
+          <p className="text-white font-medium">Reconectando...</p>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
