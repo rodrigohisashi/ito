@@ -1,8 +1,8 @@
 // Room storage (in-memory)
 const rooms = new Map();
 
-// Tempo para remover player desconectado (5 minutos)
-const DISCONNECT_TIMEOUT = 5 * 60 * 1000;
+// Tempo para remover player desconectado (30 minutos)
+const DISCONNECT_TIMEOUT = 30 * 60 * 1000;
 
 // Generate random 4-character room code
 function generateRoomCode() {
@@ -136,7 +136,7 @@ function getRoomByPlayerId(socketId) {
   return null;
 }
 
-// Marca player como desconectado (não remove imediatamente)
+// Marca player como desconectado (não remove imediatamente - mantém como "ghost")
 function markPlayerDisconnected(socketId) {
   const room = getRoomByPlayerId(socketId);
   if (!room) return null;
@@ -144,42 +144,39 @@ function markPlayerDisconnected(socketId) {
   const player = room.players.find((p) => p.id === socketId);
   if (!player) return null;
 
-  // Se está no lobby, remove de vez (não faz sentido manter)
-  if (room.status === 'lobby') {
-    room.players = room.players.filter((p) => p.id !== socketId);
-
-    if (room.players.length === 0) {
-      rooms.delete(room.code);
-      return { room, deleted: true };
-    }
-
-    // Se host saiu, atribui novo host
-    if (room.host === socketId && room.players.length > 0) {
-      room.host = room.players[0].id;
-      room.hostPlayerId = room.players[0].playerId;
-    }
-
-    return { room, deleted: false, newHost: room.host };
-  }
-
-  // Durante o jogo, apenas marca como desconectado
+  // Marca como desconectado (tanto no lobby quanto no jogo)
   player.disconnected = true;
   player.disconnectedAt = Date.now();
 
-  console.log(`Player ${player.name} marcado como desconectado na sala ${room.code}`);
+  console.log(`Player ${player.name} marcado como desconectado na sala ${room.code} (status: ${room.status})`);
 
-  // Agenda remoção após timeout
+  // Verifica se todos os players estão desconectados
+  const allDisconnected = room.players.every((p) => p.disconnected);
+  if (allDisconnected) {
+    // Se todos desconectaram, agenda remoção da sala
+    console.log(`Todos os players desconectados na sala ${room.code}, agendando remoção`);
+    setTimeout(() => {
+      const currentRoom = rooms.get(room.code);
+      if (currentRoom && currentRoom.players.every((p) => p.disconnected)) {
+        console.log(`Removendo sala ${room.code} por inatividade total`);
+        rooms.delete(room.code);
+      }
+    }, DISCONNECT_TIMEOUT);
+  }
+
+  // Agenda remoção do player após timeout
   setTimeout(() => {
     cleanupDisconnectedPlayer(room.code, player.playerId);
   }, DISCONNECT_TIMEOUT);
 
-  // Se host desconectou, passa pra outro player conectado
+  // Se host desconectou, passa para outro player conectado
   if (room.host === socketId) {
     const connectedPlayer = room.players.find((p) => !p.disconnected);
     if (connectedPlayer) {
       room.host = connectedPlayer.id;
       room.hostPlayerId = connectedPlayer.playerId;
     }
+    // Se não há ninguém conectado, mantém o host original (ele pode reconectar)
   }
 
   return { room, deleted: false, newHost: room.host, playerDisconnected: player };

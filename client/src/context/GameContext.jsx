@@ -122,17 +122,31 @@ export function GameProvider({ children }) {
 
     newSocket.on('player-disconnected', (data) => {
       console.log('Player disconnected:', data);
-      // Atualiza o estado atual (room, voting ou game)
+      // Atualiza o estado atual (room, voting ou game) baseado no status
       if (data.room) {
-        setRoom((prev) => prev ? data.room : prev);
+        const status = data.room.status;
+        if (status === 'lobby') {
+          setRoom((prev) => prev ? data.room : prev);
+        } else if (status === 'voting') {
+          setVotingState((prev) => prev ? { ...prev, ...data.room } : prev);
+        } else if (status === 'playing' || status === 'reveal') {
+          setGameState((prev) => prev ? { ...prev, ...data.room } : prev);
+        }
       }
     });
 
     newSocket.on('player-reconnected', (data) => {
       console.log('Player reconnected:', data);
-      // Atualiza o estado atual
+      // Atualiza o estado atual (room, voting ou game) baseado no status
       if (data.room) {
-        setRoom((prev) => prev ? data.room : prev);
+        const status = data.room.status;
+        if (status === 'lobby') {
+          setRoom((prev) => prev ? data.room : prev);
+        } else if (status === 'voting') {
+          setVotingState((prev) => prev ? { ...prev, ...data.room } : prev);
+        } else if (status === 'playing' || status === 'reveal') {
+          setGameState((prev) => prev ? { ...prev, ...data.room } : prev);
+        }
       }
     });
 

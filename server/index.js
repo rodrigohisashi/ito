@@ -614,28 +614,18 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`Player disconnected: ${socket.id}`);
 
-    // Marca como desconectado ao invés de remover (permite reconexão)
+    // Marca como desconectado ao invés de remover (permite reconexão por 30 min)
     const result = roomManager.markPlayerDisconnected(socket.id);
 
-    if (result && !result.deleted) {
-      // Notifica outros jogadores
+    if (result && !result.deleted && result.playerDisconnected) {
+      // Notifica outros jogadores que este player desconectou (mas ainda é "ghost")
       result.room.players.forEach((player) => {
         if (!player.disconnected && player.id !== socket.id) {
-          if (result.playerDisconnected) {
-            // Durante o jogo - player só desconectou temporariamente
-            io.to(player.id).emit('player-disconnected', {
-              player: { id: socket.id, name: result.playerDisconnected.name },
-              newHost: result.newHost,
-              room: gameLogic.getPublicRoomState(result.room, player.id),
-            });
-          } else {
-            // No lobby - player saiu de vez
-            io.to(player.id).emit('player-left', {
-              playerId: socket.id,
-              newHost: result.newHost,
-              room: gameLogic.getPublicRoomState(result.room, player.id),
-            });
-          }
+          io.to(player.id).emit('player-disconnected', {
+            player: { id: socket.id, name: result.playerDisconnected.name },
+            newHost: result.newHost,
+            room: gameLogic.getPublicRoomState(result.room, player.id),
+          });
         }
       });
     }
