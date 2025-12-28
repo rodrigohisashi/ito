@@ -28,7 +28,7 @@ fi
 
 # 2. Atualizar servidor
 echo -e "\n${GREEN}🔄 Atualizando servidor...${NC}"
-ssh -i $KEY $SERVER "cd /var/www/ito && git pull && npm run build && pm2 restart ito"
+ssh -i $KEY $SERVER "cd /var/www/ito && git pull && cd client && npm install && cd .. && npm run build && pm2 restart ito"
 
 echo -e "\n${GREEN}✅ Deploy concluído!${NC}"
 echo -e "🌐 Acesse: http://159.89.152.188"
