@@ -189,6 +189,7 @@ export default function Voting() {
             onForceStart={handleForceStart}
             onBackToLobby={handleBackToLobby}
             drawnNumber={votingState.drawnNumber}
+            countdownSeconds={votingState.countdownSeconds}
           />
         </div>
 

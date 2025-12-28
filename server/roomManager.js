@@ -57,8 +57,8 @@ function joinRoom(code, socketId, playerName, playerId) {
   if (room.status !== 'lobby') {
     return { error: 'Jogo já começou' };
   }
-  if (room.players.length >= 8) {
-    return { error: 'Sala cheia (máximo 8 jogadores)' };
+  if (room.players.length >= 20) {
+    return { error: 'Sala cheia (máximo 20 jogadores)' };
   }
 
   // Verifica nome duplicado (case-insensitive, ignorando players com mesmo playerId)
@@ -329,10 +329,35 @@ function addVote(code, playerId, themeId) {
 
   room.votes[playerId] = themeId;
 
-  // Check if all players voted
-  const allVoted = room.players.every((p) => room.votes[p.id] !== undefined);
+  // Count connected players only (not disconnected)
+  const connectedPlayers = room.players.filter((p) => !p.disconnected);
+  const totalConnected = connectedPlayers.length;
+  const totalVotes = Object.keys(room.votes).length;
 
-  return { room, allVoted };
+  // Check if all players voted
+  const allVoted = connectedPlayers.every((p) => room.votes[p.id] !== undefined);
+
+  // Check if majority voted (more than 50%)
+  const majorityVoted = totalVotes > totalConnected / 2;
+
+  return { room, allVoted, majorityVoted, totalVotes, totalConnected };
+}
+
+// Start or cancel majority countdown
+function setMajorityCountdown(code, countdownEnd) {
+  const room = rooms.get(code);
+  if (room) {
+    room.majorityCountdownEnd = countdownEnd;
+  }
+  return room;
+}
+
+// Get countdown remaining
+function getCountdownRemaining(code) {
+  const room = rooms.get(code);
+  if (!room || !room.majorityCountdownEnd) return null;
+  const remaining = Math.max(0, Math.ceil((room.majorityCountdownEnd - Date.now()) / 1000));
+  return remaining;
 }
 
 // Get vote winner
@@ -418,6 +443,8 @@ module.exports = {
   setVotingThemes,
   addVote,
   getVoteWinner,
+  setMajorityCountdown,
+  getCountdownRemaining,
   setDrawnNumber,
   resetRoom,
   getAllRooms,

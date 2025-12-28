@@ -149,7 +149,7 @@ export default function Lobby() {
       >
         <div className="flex items-center justify-between mb-3">
           <p className="text-gold/60 text-sm">
-            Jogadores ({room.players.length}/8)
+            Jogadores ({room.players.length}/20)
           </p>
           {room.players.length < 2 && (
             <p className="text-gold-rose text-xs">Minimo 2 jogadores</p>

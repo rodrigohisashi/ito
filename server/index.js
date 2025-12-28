@@ -9,6 +9,9 @@ const gameLogic = require('./gameLogic');
 const { getRandomThemes, getThemeById, getRandomThemeNumber, getThemesAroundNumber } = require('./themes');
 
 const app = express();
+
+// Track active countdown timers per room
+const countdownTimers = new Map();
 const httpServer = createServer(app);
 
 const PORT = process.env.PORT || 3001;
@@ -38,6 +41,34 @@ if (!isDev) {
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', rooms: roomManager.getAllRooms().length });
 });
+
+// Helper function to start game from voting
+function startGameFromVoting(code) {
+  const room = roomManager.getRoom(code);
+  if (!room || room.status !== 'voting') return;
+
+  // Clear any countdown timer
+  if (countdownTimers.has(code)) {
+    clearTimeout(countdownTimers.get(code));
+    countdownTimers.delete(code);
+  }
+  roomManager.setMajorityCountdown(code, null);
+
+  // Determine winner
+  const winningTheme = roomManager.getVoteWinner(code);
+  room.selectedTheme = winningTheme;
+
+  console.log(`Game starting in room ${code}. Winner: ${winningTheme.title} (#${winningTheme.id})`);
+
+  // Deal cards and start game
+  gameLogic.dealCards(room.players);
+  roomManager.updateRoomStatus(code, 'playing');
+
+  // Send game state to each player
+  room.players.forEach((player) => {
+    io.to(player.id).emit('game-started', gameLogic.getPlayerGameState(room, player.id));
+  });
+}
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
@@ -301,8 +332,13 @@ io.on('connection', (socket) => {
       const themes = getThemesAroundNumber(themeNumber, 2);
       roomManager.setVotingThemes(code, themes);
 
-      // Clear any existing votes
+      // Clear any existing votes and countdown
       room.votes = {};
+      if (countdownTimers.has(code)) {
+        clearTimeout(countdownTimers.get(code));
+        countdownTimers.delete(code);
+      }
+      roomManager.setMajorityCountdown(code, null);
 
       console.log(`Admin changed theme number in room ${code} to ${themeNumber}. Themes:`, themes.map(t => t.id));
 
@@ -332,35 +368,42 @@ io.on('connection', (socket) => {
         return;
       }
 
-      const { room, allVoted } = result;
-      console.log(`${socket.id} voted for theme ${themeId} in room ${code}`);
+      const { room, allVoted, majorityVoted, totalVotes, totalConnected } = result;
+      console.log(`${socket.id} voted for theme ${themeId} in room ${code} (${totalVotes}/${totalConnected})`);
 
-      // Notify all players of the vote
+      // If all voted, start game immediately
+      if (allVoted) {
+        console.log(`All players voted in room ${code}, starting game immediately`);
+        startGameFromVoting(code);
+        callback({ success: true });
+        return;
+      }
+
+      // If majority voted and no countdown yet, start 30-second countdown
+      if (majorityVoted && !room.majorityCountdownEnd) {
+        const countdownEnd = Date.now() + 30 * 1000;
+        roomManager.setMajorityCountdown(code, countdownEnd);
+        console.log(`Majority voted in room ${code}, starting 30s countdown`);
+
+        // Set timeout to start game after countdown
+        const timer = setTimeout(() => {
+          console.log(`Countdown ended in room ${code}, starting game`);
+          countdownTimers.delete(code);
+          startGameFromVoting(code);
+        }, 30 * 1000);
+
+        countdownTimers.set(code, timer);
+      }
+
+      // Notify all players of the vote (include countdown info)
+      const countdownRemaining = roomManager.getCountdownRemaining(code);
       room.players.forEach((player) => {
         io.to(player.id).emit('vote-update', {
           ...gameLogic.getVotingState(room, player.id),
           drawnNumber: room.drawnNumber,
+          countdownSeconds: countdownRemaining,
         });
       });
-
-      // If all voted, determine winner and start game directly
-      if (allVoted) {
-        const winningTheme = roomManager.getVoteWinner(code);
-        room.selectedTheme = winningTheme;
-
-        console.log(`Voting complete in room ${code}. Winner: ${winningTheme.title} (#${winningTheme.id})`);
-
-        // Deal cards and start game
-        gameLogic.dealCards(room.players);
-        roomManager.updateRoomStatus(code, 'playing');
-
-        console.log(`Game started in room ${code} with theme: ${winningTheme.title}`);
-
-        // Send game state to each player
-        room.players.forEach((player) => {
-          io.to(player.id).emit('game-started', gameLogic.getPlayerGameState(room, player.id));
-        });
-      }
 
       callback({ success: true });
     } catch (error) {
@@ -383,6 +426,13 @@ io.on('connection', (socket) => {
         callback({ success: false, error: 'Apenas o host pode pular' });
         return;
       }
+
+      // Clear any countdown
+      if (countdownTimers.has(code)) {
+        clearTimeout(countdownTimers.get(code));
+        countdownTimers.delete(code);
+      }
+      roomManager.setMajorityCountdown(code, null);
 
       // Pick random theme from the options
       const randomTheme = room.votingThemes[Math.floor(Math.random() * room.votingThemes.length)];
@@ -428,6 +478,13 @@ io.on('connection', (socket) => {
         callback({ success: false, error: 'Apenas o admin pode iniciar' });
         return;
       }
+
+      // Clear any countdown
+      if (countdownTimers.has(code)) {
+        clearTimeout(countdownTimers.get(code));
+        countdownTimers.delete(code);
+      }
+      roomManager.setMajorityCountdown(code, null);
 
       // Get theme - either specified, most voted, or random
       let selectedTheme;

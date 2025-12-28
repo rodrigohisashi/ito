@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from './Button';
 
@@ -14,6 +14,7 @@ export default function ThemeVoting({
   onForceStart,
   onBackToLobby,
   drawnNumber,
+  countdownSeconds,
 }) {
   const [selectedTheme, setSelectedTheme] = useState(null);
   const [isVoting, setIsVoting] = useState(false);
@@ -22,6 +23,32 @@ export default function ThemeVoting({
   const [isResetting, setIsResetting] = useState(false);
   const [customNumber, setCustomNumber] = useState('');
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [localCountdown, setLocalCountdown] = useState(null);
+
+  // Sync local countdown with server countdown
+  useEffect(() => {
+    if (countdownSeconds !== null && countdownSeconds !== undefined && countdownSeconds > 0) {
+      setLocalCountdown(countdownSeconds);
+    } else {
+      setLocalCountdown(null);
+    }
+  }, [countdownSeconds]);
+
+  // Decrement local countdown every second
+  useEffect(() => {
+    if (localCountdown === null || localCountdown <= 0) return;
+
+    const timer = setInterval(() => {
+      setLocalCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [localCountdown > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalPlayers = players?.length || 0;
   const totalVotes = Object.keys(votes || {}).length;
@@ -354,24 +381,40 @@ export default function ThemeVoting({
         </motion.div>
       )}
 
-      {/* Waiting indicator */}
+      {/* Waiting indicator with countdown */}
       {hasVoted && !allVoted && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="flex flex-col items-center gap-3"
         >
-          <div className="flex gap-2">
-            {[0, 1, 2].map((i) => (
+          {localCountdown !== null && localCountdown > 0 ? (
+            <>
               <motion.div
-                key={i}
-                className="w-3 h-3 bg-primary rounded-full"
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.1 }}
-              />
-            ))}
-          </div>
-          <p className="text-white/40 text-sm">Aguardando votos...</p>
+                key="countdown"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 border-2 border-primary"
+              >
+                <span className="text-2xl font-bold text-primary">{localCountdown}</span>
+              </motion.div>
+              <p className="text-primary text-sm font-medium">Maioria votou! Iniciando em {localCountdown}s...</p>
+            </>
+          ) : (
+            <>
+              <div className="flex gap-2">
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="w-3 h-3 bg-primary rounded-full"
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.1 }}
+                  />
+                ))}
+              </div>
+              <p className="text-white/40 text-sm">Aguardando votos... ({totalVotes}/{totalPlayers})</p>
+            </>
+          )}
         </motion.div>
       )}
 
