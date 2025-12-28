@@ -243,7 +243,7 @@ export default function ThemeVoting({
               {/* Divider */}
               <div className="border-t border-white/10 pt-3">
                 <Button
-                  onClick={() => handleForceStart(selectedTheme)}
+                  onClick={() => handleForceStart(null)}
                   variant="primary"
                   size="sm"
                   className="w-full"
@@ -252,11 +252,9 @@ export default function ThemeVoting({
                   🚀 Começar Jogo Agora
                 </Button>
                 <p className="text-xs text-white/30 text-center mt-2">
-                  {selectedTheme
-                    ? `Usar tema #${selectedTheme}`
-                    : totalVotes > 0
-                      ? 'Usar tema mais votado'
-                      : 'Usar tema aleatório'}
+                  {totalVotes > 0
+                    ? 'Usar tema mais votado'
+                    : 'Usar tema aleatório'}
                 </p>
               </div>
 
@@ -427,7 +425,7 @@ export default function ThemeVoting({
           className="mt-4 w-full"
         >
           <Button
-            onClick={() => handleForceStart(selectedTheme)}
+            onClick={() => handleForceStart(null)}
             variant="primary"
             size="lg"
             className="w-full"
@@ -436,11 +434,9 @@ export default function ThemeVoting({
             🚀 Começar Jogo Agora
           </Button>
           <p className="text-xs text-white/40 text-center mt-2">
-            {selectedTheme
-              ? `Usar tema #${selectedTheme}`
-              : totalVotes > 0
-                ? 'Usar tema mais votado'
-                : 'Usar tema aleatório'}
+            {totalVotes > 0
+              ? 'Usar tema mais votado'
+              : 'Usar tema aleatório'}
           </p>
         </motion.div>
       )}
