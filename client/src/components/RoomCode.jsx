@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function RoomCode({ code }) {
   const [copied, setCopied] = useState(false);
+  const [showQR, setShowQR] = useState(false);
 
   // Use /entrar/:code for the shareable link
   const shareUrl = `${window.location.origin}/entrar/${code}`;
@@ -77,8 +79,52 @@ export default function RoomCode({ code }) {
         Copiado!
       </motion.p>
 
+      {/* QR Code */}
+      <AnimatePresence>
+        {showQR && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="glass-strong rounded-2xl p-4 border-glow">
+              <div className="bg-white rounded-xl p-3">
+                <QRCodeSVG
+                  value={shareUrl}
+                  size={180}
+                  level="M"
+                  marginSize={0}
+                />
+              </div>
+              <p className="text-ivory/50 text-xs text-center mt-2">
+                Escaneie para entrar na sala
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Action buttons */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap justify-center">
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setShowQR(!showQR)}
+          className={`glass rounded-xl px-4 py-2 flex items-center gap-2 transition-colors ${
+            showQR ? 'text-gold border-gold/30' : 'text-ivory/70 hover:text-gold hover:border-gold/30'
+          }`}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+            />
+          </svg>
+          QR Code
+        </motion.button>
+
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={copyLink}
@@ -92,7 +138,7 @@ export default function RoomCode({ code }) {
               d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
             />
           </svg>
-          Copiar Link
+          Link
         </motion.button>
 
         <motion.button
