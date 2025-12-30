@@ -100,6 +100,27 @@ const themes = [
   { id: 98, title: "Ações e atitudes que exigem coragem", min: "nada corajoso", max: "pura coragem" },
   { id: 99, title: "Se você tivesse um alter ego, o que gostaria que ele fosse?", min: "não gostaria", max: "é meu tipo" },
   { id: 100, title: "Habilidades importantes para um streamer", min: "desnecessária", max: "obrigatória" },
+  // Novos temas adicionados
+  { id: 101, title: "Músicas para cantar no karaokê", min: "ninguém conhece", max: "todo mundo canta junto" },
+  { id: 102, title: "Coisas que você faria por 1 milhão de reais", min: "nem por 10 milhões", max: "faria de graça" },
+  { id: 103, title: "Profissões mais estressantes", min: "relaxante", max: "infarto garantido" },
+  { id: 104, title: "Comidas para comer às 3h da manhã", min: "nem pensar", max: "perfeito pra madrugada" },
+  { id: 105, title: "Coisas que você compraria se ganhasse na loteria", min: "não compraria", max: "primeira coisa da lista" },
+  { id: 106, title: "Desculpas para não ir trabalhar", min: "ninguém acredita", max: "desculpa perfeita" },
+  { id: 107, title: "Coisas que te irritam no trânsito", min: "nem ligo", max: "dá vontade de buzinar" },
+  { id: 108, title: "Séries para maratonar", min: "desisti no piloto", max: "viciei completamente" },
+  { id: 109, title: "Coisas constrangedoras de fazer em público", min: "normal", max: "morreria de vergonha" },
+  { id: 110, title: "Melhores lugares para um primeiro encontro", min: "péssima ideia", max: "lugar perfeito" },
+  { id: 111, title: "Coisas que você esconderia dos seus pais", min: "contaria tranquilo", max: "segredo eterno" },
+  { id: 112, title: "Animais mais perigosos", min: "inofensivo", max: "fuja imediatamente" },
+  { id: 113, title: "Piores coisas para pisar descalço", min: "de boa", max: "dor insuportável" },
+  { id: 114, title: "Coisas que você faz quando ninguém está olhando", min: "faço na frente de todos", max: "segredo absoluto" },
+  { id: 115, title: "Melhores férias possíveis", min: "prefiro trabalhar", max: "férias dos sonhos" },
+  { id: 116, title: "Coisas mais satisfatórias", min: "tanto faz", max: "satisfação pura" },
+  { id: 117, title: "Piores coisas para esquecer", min: "sem problema", max: "catástrofe total" },
+  { id: 118, title: "Jogos de videogame mais viciantes", min: "larguei rápido", max: "perdi noites de sono" },
+  { id: 119, title: "Coisas que te fazem sentir velho(a)", min: "ainda sou jovem", max: "me senti um dinossauro" },
+  { id: 120, title: "Superpoderes mais úteis no dia a dia", min: "inútil", max: "resolveria minha vida" },
 ];
 
 // Get random themes for voting
@@ -115,23 +136,25 @@ function getThemeById(id) {
 
 // Get random theme number (for the number draw animation)
 function getRandomThemeNumber() {
-  return Math.floor(Math.random() * 100) + 1; // 1 to 100
+  return Math.floor(Math.random() * 120) + 1; // 1 to 120
 }
 
 // Get themes around a specific number (e.g., num=62 returns themes 60-64)
 function getThemesAroundNumber(num, range = 2) {
-  // Calculate start and end, keeping within 1-100
+  const maxTheme = 120; // Total de temas disponíveis
+
+  // Calculate start and end, keeping within 1-maxTheme
   let start = num - range;
   let end = num + range;
 
   // Adjust if we're near the edges
   if (start < 1) {
     start = 1;
-    end = Math.min(1 + range * 2, 100);
+    end = Math.min(1 + range * 2, maxTheme);
   }
-  if (end > 100) {
-    end = 100;
-    start = Math.max(100 - range * 2, 1);
+  if (end > maxTheme) {
+    end = maxTheme;
+    start = Math.max(maxTheme - range * 2, 1);
   }
 
   // Get themes in that range
