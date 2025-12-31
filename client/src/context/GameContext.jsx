@@ -130,7 +130,15 @@ export function GameProvider({ children }) {
         } else if (status === 'voting') {
           setVotingState((prev) => prev ? { ...prev, ...data.room } : prev);
         } else if (status === 'playing' || status === 'reveal') {
-          setGameState((prev) => prev ? { ...prev, ...data.room } : prev);
+          // Preserve card data when updating players (server sends getPublicRoomState which has no cards)
+          setGameState((prev) => {
+            if (!prev) return prev;
+            const updatedPlayers = prev.players.map((p) => {
+              const newPlayerData = data.room.players?.find((np) => np.id === p.id);
+              return newPlayerData ? { ...p, disconnected: newPlayerData.disconnected } : p;
+            });
+            return { ...prev, players: updatedPlayers };
+          });
         }
       }
     });
@@ -145,7 +153,15 @@ export function GameProvider({ children }) {
         } else if (status === 'voting') {
           setVotingState((prev) => prev ? { ...prev, ...data.room } : prev);
         } else if (status === 'playing' || status === 'reveal') {
-          setGameState((prev) => prev ? { ...prev, ...data.room } : prev);
+          // Preserve card data when updating players (server sends getPublicRoomState which has no cards)
+          setGameState((prev) => {
+            if (!prev) return prev;
+            const updatedPlayers = prev.players.map((p) => {
+              const newPlayerData = data.room.players?.find((np) => np.id === p.id);
+              return newPlayerData ? { ...p, disconnected: newPlayerData.disconnected } : p;
+            });
+            return { ...prev, players: updatedPlayers };
+          });
         }
       }
     });
