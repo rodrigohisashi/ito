@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 
 const GameContext = createContext(null);
 
-const SOCKET_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+const SOCKET_URL = import.meta.env.VITE_SERVER_URL || (import.meta.env.PROD ? '' : 'http://localhost:3001');
 
 // Gera ou recupera um ID único persistente para o player
 function getOrCreatePlayerId() {
